@@ -12,6 +12,8 @@ internal class SearchController(HttpClient http)
         string searchQuery,
         SearchFilter searchFilter,
         string? continuationToken,
+        string hl,
+        string gl,
         CancellationToken cancellationToken = default
     )
     {
@@ -20,25 +22,22 @@ internal class SearchController(HttpClient http)
             "https://www.youtube.com/youtubei/v1/search"
         );
 
+        var filter = searchFilter.ToString();
+
         request.Content = new StringContent(
             // lang=json
             $$"""
             {
               "query": {{Json.Encode(searchQuery)}},
-              "params": {{Json.Encode(searchFilter switch
-              {
-                SearchFilter.Video => "EgIQAQ%3D%3D",
-                SearchFilter.Playlist => "EgIQAw%3D%3D",
-                SearchFilter.Channel => "EgIQAg%3D%3D",
-                _ => null
-              })}},
+              "params": {{Json.Encode(!string.IsNullOrWhiteSpace(filter) ? filter : null)}},
               "continuation": {{Json.Encode(continuationToken)}},
               "context": {
                 "client": {
                   "clientName": "WEB",
                   "clientVersion": "2.20210408.08.00",
-                  "hl": "en",
-                  "gl": "US",
+                  "hl": {{Json.Encode(hl)}},
+                  "gl": {{Json.Encode(gl)}},
+                  "persist_hl": "1",
                   "utcOffsetMinutes": 0
                 }
               }

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Xunit;
 using YoutubeExplode.Common;
+using YoutubeExplode.Search;
 
 namespace YoutubeExplode.Tests;
 
@@ -124,5 +125,51 @@ public class SearchSpecs
 
         // Assert
         channels.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task I_can_get_results_from_a_search_query_with_localization()
+    {
+        // Arrange
+        using var youtube = new YoutubeClient();
+
+        // Act
+        var results = await youtube.Search.GetResultsAsync("news", SearchFilter.None, "uk", "UA");
+
+        // Assert
+        results.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task I_can_get_video_results_from_a_search_query_with_localization()
+    {
+        // Arrange
+        using var youtube = new YoutubeClient();
+
+        // Act
+        var videos = await youtube.Search.GetVideosAsync("music", "fr", "FR");
+
+        // Assert
+        videos.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task I_can_get_results_from_a_search_query_with_advanced_filters()
+    {
+        // Arrange
+        using var youtube = new YoutubeClient();
+
+        var filter = new SearchFilter(
+            Type: SearchFilterType.Video,
+            UploadDate: SearchFilterUploadDate.ThisWeek,
+            Duration: SearchFilterDuration.Short,
+            SortBy: SearchFilterSortBy.UploadDate
+        );
+
+        // Act
+        var results = await youtube.Search.GetResultsAsync("news", filter);
+
+        // Assert
+        results.Should().NotBeEmpty();
     }
 }

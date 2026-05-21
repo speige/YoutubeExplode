@@ -24,7 +24,9 @@ public class SearchClient(HttpClient http)
     /// </summary>
     public async IAsyncEnumerable<Batch<ISearchResult>> GetResultBatchesAsync(
         string searchQuery,
-        SearchFilter searchFilter,
+        SearchFilter searchFilter = default,
+        string hl = "en",
+        string gl = "US",
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
@@ -39,13 +41,15 @@ public class SearchClient(HttpClient http)
                 searchQuery,
                 searchFilter,
                 continuationToken,
+                hl,
+                gl,
                 cancellationToken
             );
 
             // Video results
             foreach (var videoData in searchResults.Videos)
             {
-                if (searchFilter is not SearchFilter.None and not SearchFilter.Video)
+                if (searchFilter.Type is not null && searchFilter.Type != SearchFilterType.Video)
                 {
                     Debug.Fail("Did not expect videos in search results.");
                     break;
@@ -120,7 +124,7 @@ public class SearchClient(HttpClient http)
             // Playlist results
             foreach (var playlistData in searchResults.Playlists)
             {
-                if (searchFilter is not SearchFilter.None and not SearchFilter.Playlist)
+                if (searchFilter.Type is not null && searchFilter.Type != SearchFilterType.Playlist)
                 {
                     Debug.Fail("Did not expect playlists in search results.");
                     break;
@@ -185,7 +189,7 @@ public class SearchClient(HttpClient http)
             // Channel results
             foreach (var channelData in searchResults.Channels)
             {
-                if (searchFilter is not SearchFilter.None and not SearchFilter.Channel)
+                if (searchFilter.Type is not null && searchFilter.Type != SearchFilterType.Channel)
                 {
                     Debug.Fail("Did not expect channels in search results.");
                     break;
@@ -238,29 +242,26 @@ public class SearchClient(HttpClient http)
     }
 
     /// <summary>
-    /// Enumerates batches of search results returned by the specified query.
-    /// </summary>
-    public IAsyncEnumerable<Batch<ISearchResult>> GetResultBatchesAsync(
-        string searchQuery,
-        CancellationToken cancellationToken = default
-    ) => GetResultBatchesAsync(searchQuery, SearchFilter.None, cancellationToken);
-
-    /// <summary>
     /// Enumerates search results returned by the specified query.
     /// </summary>
     public IAsyncEnumerable<ISearchResult> GetResultsAsync(
         string searchQuery,
+        SearchFilter searchFilter = default,
+        string hl = "en",
+        string gl = "US",
         CancellationToken cancellationToken = default
-    ) => GetResultBatchesAsync(searchQuery, cancellationToken).FlattenAsync();
+    ) => GetResultBatchesAsync(searchQuery, searchFilter, hl, gl, cancellationToken).FlattenAsync();
 
     /// <summary>
     /// Enumerates video search results returned by the specified query.
     /// </summary>
     public IAsyncEnumerable<VideoSearchResult> GetVideosAsync(
         string searchQuery,
+        string hl = "en",
+        string gl = "US",
         CancellationToken cancellationToken = default
     ) =>
-        GetResultBatchesAsync(searchQuery, SearchFilter.Video, cancellationToken)
+        GetResultBatchesAsync(searchQuery, SearchFilter.Video, hl, gl, cancellationToken)
             .FlattenAsync()
             .OfTypeAsync<VideoSearchResult>();
 
@@ -269,9 +270,11 @@ public class SearchClient(HttpClient http)
     /// </summary>
     public IAsyncEnumerable<PlaylistSearchResult> GetPlaylistsAsync(
         string searchQuery,
+        string hl = "en",
+        string gl = "US",
         CancellationToken cancellationToken = default
     ) =>
-        GetResultBatchesAsync(searchQuery, SearchFilter.Playlist, cancellationToken)
+        GetResultBatchesAsync(searchQuery, SearchFilter.Playlist, hl, gl, cancellationToken)
             .FlattenAsync()
             .OfTypeAsync<PlaylistSearchResult>();
 
@@ -280,9 +283,11 @@ public class SearchClient(HttpClient http)
     /// </summary>
     public IAsyncEnumerable<ChannelSearchResult> GetChannelsAsync(
         string searchQuery,
+        string hl = "en",
+        string gl = "US",
         CancellationToken cancellationToken = default
     ) =>
-        GetResultBatchesAsync(searchQuery, SearchFilter.Channel, cancellationToken)
+        GetResultBatchesAsync(searchQuery, SearchFilter.Channel, hl, gl, cancellationToken)
             .FlattenAsync()
             .OfTypeAsync<ChannelSearchResult>();
 }
